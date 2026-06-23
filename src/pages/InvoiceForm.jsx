@@ -11,7 +11,7 @@ import CustomerSearch from '../components/ui/CustomerSearch';
 import Spinner from '../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
-const emptyItem = { qty: 1, description: '', weight: 0, qom: 'gm', rate: 0, amount: 0 };
+const emptyItem = { qty: 1, description: '', weight: '', qom: 'gm', rate: '', amount: '' };
 
 export default function InvoiceForm() {
   const { id } = useParams();
@@ -38,7 +38,7 @@ export default function InvoiceForm() {
     pay: 0,
     paidBy: '',
   });
-  const [paymentType, setPaymentType] = useState('full');
+  const [paymentType, setPaymentType] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,6 +136,22 @@ export default function InvoiceForm() {
     if (form.items.some((item) => !item.description.trim())) {
       toast.error('All items need a description');
       return;
+    }
+    if (form.items.some((item) => !item.weight.trim())) {
+      toast.error('All items need a weight');
+      return;
+    }
+    if (form.items.some((item) => !item.rate.trim())) {
+      toast.error('All items need a rate');
+      return;
+    }
+    if (form.items.some((item) => !item.amount)) {
+      toast.error('All items need a amount');
+      return;
+    }
+    if(paymentType === ''){
+      toast.error('Select payment option');
+      return
     }
 
     setSaving(true);
@@ -303,8 +319,12 @@ export default function InvoiceForm() {
               {isNewCustomer && (
                 <Input
                   label="Phone *"
+                  type="number"
                   value={form.customerPhone}
-                  onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setForm({ ...form, customerPhone: value })
+                  }}
                   placeholder="Phone number"
                 />
               )}
