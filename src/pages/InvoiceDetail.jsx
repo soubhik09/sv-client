@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Printer, Download, IndianRupee } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, formatDateTime, getStatusColor } from '../lib/formatters';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -15,6 +16,7 @@ import toast from 'react-hot-toast';
 export default function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [invoice, setInvoice] = useState(null);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -300,10 +302,12 @@ export default function InvoiceDetail() {
             <Download className="w-4 h-4" />
             Download
           </Button>
-          <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </Button>
+          {user?.role === 'Admin' && (
+            <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </Button>
+          )}
         </div>
       </div>
 

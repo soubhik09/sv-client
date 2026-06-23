@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, UserCog, Mail, Phone } from 'lucide-react';
 import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../lib/formatters';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -12,6 +13,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 export default function Staff() {
+  const { user } = useAuth();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -105,12 +107,14 @@ export default function Staff() {
                     <p className="text-xs text-gray-500">Added {formatDate(member.createdAt)}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setDeleteTarget(member)}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {user?.role === 'Admin' && (
+                  <button
+                    onClick={() => setDeleteTarget(member)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
