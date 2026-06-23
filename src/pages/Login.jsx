@@ -90,7 +90,7 @@ export default function Login() {
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />
-                  Login In
+                  Log In
                 </>
               )}
             </button>
