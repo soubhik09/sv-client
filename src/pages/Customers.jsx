@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Phone, MapPin, Edit2, Trash2, Eye, FileDown } from 'lucide-react';
 import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../lib/formatters';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -14,6 +15,7 @@ import CustomerModal from '../components/customers/CustomerModal';
 import toast from 'react-hot-toast';
 
 export default function Customers() {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -292,14 +294,16 @@ export default function Customers() {
                   <Edit2 className="w-3.5 h-3.5" />
                   Edit
                 </button>
-                <button
-                  onClick={() => setDeleteTarget(customer)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 
-                    rounded-md hover:bg-red-50 transition-colors ml-auto"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
-                </button>
+                {user?.role === 'Admin' && (
+                  <button
+                    onClick={() => setDeleteTarget(customer)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 
+                      rounded-md hover:bg-red-50 transition-colors ml-auto"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                )}
               </div>
             </Card>
           ))}
