@@ -36,6 +36,7 @@ export const getStatusColor = (status) => {
     case 'Unpaid':
       return 'bg-pink-100 text-pink-600';
     case 'DueToNext':
+    case 'Carry-Forward':
       return 'bg-blue-100 text-blue-600';
     default:
       return 'bg-gray-100 text-gray-600';

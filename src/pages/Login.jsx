@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left Blue Panel */}
-      <div className="md:w-5/12 bg-gradient-to-br from-blue-600 to-indigo-700 p-10 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[300px] md:min-h-screen">
+      <div className="md:w-5/12 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 sm:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[250px] md:min-h-screen">
         <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-800 rounded-bl-full"></div>
         <div className="absolute bottom-0 left-0 w-16 h-16 bg-indigo-800 rounded-tr-full"></div>
 
@@ -47,7 +47,7 @@ export default function Login() {
       </div>
 
       {/* Right Form Panel */}
-      <div className="md:w-7/12 bg-white p-10 md:p-16 flex flex-col justify-center md:min-h-screen">
+      <div className="md:w-7/12 bg-white p-6 sm:p-10 md:p-16 flex flex-col justify-center md:min-h-screen">
         <div className="max-w-sm mx-auto w-full">
           <h1 className="text-3xl font-bold text-indigo-700 mb-2">Sign In</h1>
           <p className="text-gray-500 text-sm mb-8">Hey, enter your details to sign in to your account</p>

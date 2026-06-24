@@ -81,7 +81,7 @@ export default function Invoices() {
       {showFilters && (
         <Card className="p-4">
           <div className="flex flex-wrap gap-3">
-            {['', 'Paid', 'Partial', 'Unpaid', 'DueToNext'].map((status) => (
+            {['', 'Paid', 'Partial', 'Unpaid', 'Carry-Forward'].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilters({ ...filters, status, page: 1 })}
@@ -138,9 +138,19 @@ export default function Invoices() {
                       </td>
                       <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{formatDate(inv.date)}</td>
                       <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(inv.grandTotal)}</td>
-                      <td className="px-4 py-3 text-right text-gray-600 hidden sm:table-cell">{formatCurrency(inv.pay)}</td>
+                      <td className="px-4 py-3 text-right text-gray-600 hidden sm:table-cell">
+                        {inv.status === 'Carry-Forward' || inv.status === 'DueToNext' ? formatCurrency(0) : formatCurrency(inv.pay)}
+                      </td>
                       <td className="px-4 py-3 text-center">
-                        <Badge className={getStatusColor(inv.status)}>{inv.status}</Badge>
+                        {(inv.status === 'Carry-Forward' || inv.status === 'DueToNext') && inv.carriedForwardTo ? (
+                          <Link to={`/invoices/${inv.carriedForwardTo._id || inv.carriedForwardTo}`}>
+                            <Badge className={`${getStatusColor(inv.status)} cursor-pointer hover:opacity-80`}>
+                              {inv.status} → {inv.carriedForwardTo.invoiceNo || 'View'}
+                            </Badge>
+                          </Link>
+                        ) : (
+                          <Badge className={getStatusColor(inv.status)}>{inv.status}</Badge>
+                        )}
                       </td>
                     </tr>
                   ))}

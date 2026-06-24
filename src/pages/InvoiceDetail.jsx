@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Trash2, Printer, Download, IndianRupee } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import api from '../lib/api';
@@ -178,13 +178,24 @@ export default function InvoiceDetail() {
             <p className="text-sm font-semibold text-blue-600 mb-2">Payment Details:</p>
             <div className="space-y-1 text-sm">
               <p><span className="text-gray-500">Grand Total:</span> <span className="font-medium text-gray-900">{formatCurrency(invoice.grandTotal)}</span></p>
-              {invoice.status !== 'DueToNext' && (
+              {invoice.status !== 'DueToNext' && invoice.status !== 'Carry-Forward' && (
                 <p><span className="text-gray-500">Paid:</span> <span className="font-medium text-emerald-600">{formatCurrency(invoice.pay)}</span></p>
               )}
-              {invoice.grandTotal - invoice.pay > 0 && invoice.status !== 'DueToNext' && (
+              {invoice.grandTotal - invoice.pay > 0 && invoice.status !== 'DueToNext' && invoice.status !== 'Carry-Forward' && (
                 <p><span className="text-gray-500">Due:</span> <span className="font-medium text-red-500">{formatCurrency(invoice.grandTotal - invoice.pay)}</span></p>
               )}
-              <p><span className="text-gray-500">Status:</span> <Badge className={`ml-1 ${getStatusColor(invoice.status)}`}>{invoice.status}</Badge></p>
+              <p>
+                <span className="text-gray-500">Status:</span>{' '}
+                {(invoice.status === 'Carry-Forward' || invoice.status === 'DueToNext') && invoice.carriedForwardTo ? (
+                  <Link to={`/invoices/${invoice.carriedForwardTo._id || invoice.carriedForwardTo}`} className="inline-flex items-center gap-1">
+                    <Badge className={`ml-1 ${getStatusColor(invoice.status)} cursor-pointer hover:opacity-80`}>
+                      {invoice.status} → {invoice.carriedForwardTo.invoiceNo || 'View'}
+                    </Badge>
+                  </Link>
+                ) : (
+                  <Badge className={`ml-1 ${getStatusColor(invoice.status)}`}>{invoice.status}</Badge>
+                )}
+              </p>
             </div>
           </div>
 
@@ -288,7 +299,7 @@ export default function InvoiceDetail() {
         {/* Action Buttons */}
         </div>{/* End of invoiceRef */}
         <div className="px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-center gap-2 sm:gap-3 no-print">
-          {balanceDue > 0 && invoice.status !== 'DueToNext' && invoice.status !== 'Paid' && (
+          {balanceDue > 0 && invoice.status !== 'DueToNext' && invoice.status !== 'Carry-Forward' && invoice.status !== 'Paid' && (
             <Button size="sm" onClick={() => setShowPayment(true)}>
               <IndianRupee className="w-4 h-4" />
               Re Pay

@@ -220,18 +220,18 @@ export default function Dashboard() {
           </div>
 
           {/* Summary below chart */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-5 border-t border-gray-100">
             <div>
               <p className="text-xs text-gray-500">Total Sales</p>
-              <p className="text-lg font-bold text-gray-900">{formatCurrency(stats?.totalSales)}</p>
+              <p className="text-base sm:text-lg font-bold text-gray-900">{formatCurrency(stats?.totalSales)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Collection</p>
-              <p className="text-lg font-bold text-emerald-600">{formatCurrency(stats?.totalCollection)}</p>
+              <p className="text-base sm:text-lg font-bold text-emerald-600">{formatCurrency(stats?.totalCollection)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Outstanding</p>
-              <p className="text-lg font-bold text-amber-600">{formatCurrency(stats?.totalOutstanding)}</p>
+              <p className="text-base sm:text-lg font-bold text-amber-600">{formatCurrency(stats?.totalOutstanding)}</p>
             </div>
           </div>
         </div>
@@ -363,7 +363,7 @@ export default function Dashboard() {
                           ${inv.status === 'Paid' ? 'bg-emerald-100 text-emerald-600' : ''}
                           ${inv.status === 'Partial' ? 'bg-amber-100 text-amber-600' : ''}
                           ${inv.status === 'Unpaid' ? 'bg-pink-100 text-pink-600' : ''}
-                          ${inv.status === 'DueToNext' ? 'bg-blue-100 text-blue-600' : ''}
+                          ${inv.status === 'DueToNext' || inv.status === 'Carry-Forward' ? 'bg-blue-100 text-blue-600' : ''}
                         `}>
                           {inv.status}
                         </span>

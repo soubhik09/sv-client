@@ -370,70 +370,73 @@ export default function InvoiceForm() {
 
             <div className="space-y-3">
               {form.items.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-end p-3 bg-gray-50 rounded-xl">
-                  <div className="col-span-6 sm:col-span-1">
-                    <Input
-                      label="Qty"
-                      type="number"
-                      min="0"
-                      value={item.qty}
-                      onChange={(e) => updateItem(index, 'qty', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-12 sm:col-span-4">
-                    <Input
-                      label="Description"
-                      value={item.description}
-                      onChange={(e) => updateItem(index, 'description', e.target.value)}
-                      placeholder="Item description"
-                    />
-                  </div>
-                  <div className="col-span-6 sm:col-span-1">
-                    <Input
-                      label="Weight"
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={item.weight}
-                      onChange={(e) => updateItem(index, 'weight', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-6 sm:col-span-1">
-                    <Input
-                      label="Unit"
-                      value={item.qom}
-                      onChange={(e) => updateItem(index, 'qom', e.target.value)}
-                      placeholder="gm"
-                    />
-                  </div>
-                  <div className="col-span-6 sm:col-span-2">
-                    <Input
-                      label="Rate (₹)"
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={item.rate}
-                      onChange={(e) => updateItem(index, 'rate', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-6 sm:col-span-2">
-                    <Input
-                      label="Amount"
-                      type="number"
-                      value={item.amount}
-                      readOnly
-                      className="bg-gray-100"
-                    />
-                  </div>
-                  <div className="col-span-6 sm:col-span-1 flex items-end justify-end pb-1">
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      disabled={form.items.length <= 1}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                <div key={index} className="p-3 bg-gray-50 rounded-xl space-y-3 sm:space-y-0">
+                  {/* Mobile layout: stacked fields */}
+                  <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 items-end">
+                    <div className="col-span-3 sm:col-span-1">
+                      <Input
+                        label="Qty"
+                        type="number"
+                        min="0"
+                        value={item.qty}
+                        onChange={(e) => updateItem(index, 'qty', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-6 sm:col-span-4 order-first sm:order-none">
+                      <Input
+                        label="Description"
+                        value={item.description}
+                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                        placeholder="Item description"
+                      />
+                    </div>
+                    <div className="col-span-3 sm:col-span-1">
+                      <Input
+                        label="Weight"
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.weight}
+                        onChange={(e) => updateItem(index, 'weight', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-3 sm:col-span-1">
+                      <Input
+                        label="Unit"
+                        value={item.qom}
+                        onChange={(e) => updateItem(index, 'qom', e.target.value)}
+                        placeholder="gm"
+                      />
+                    </div>
+                    <div className="col-span-3 sm:col-span-2">
+                      <Input
+                        label="Rate (₹)"
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.rate}
+                        onChange={(e) => updateItem(index, 'rate', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-3 sm:col-span-2">
+                      <Input
+                        label="Amount"
+                        type="number"
+                        value={item.amount}
+                        readOnly
+                        className="bg-gray-100"
+                      />
+                    </div>
+                    <div className="col-span-3 sm:col-span-1 flex items-end justify-end pb-1">
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        disabled={form.items.length <= 1}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -456,7 +459,7 @@ export default function InvoiceForm() {
                 {/* Payment Type Toggle */}
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700">Payment</label>
-                  <div className="flex items-center gap-4 mt-1">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-1">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"

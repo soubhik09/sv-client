@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   IndianRupee,
   TrendingUp,
@@ -7,22 +8,59 @@ import {
   ArrowUpRight,
   FileDown,
   Calendar,
+  Eye,
 } from 'lucide-react';
 import Chart from 'react-apexcharts';
 import api from '../lib/api';
-import { formatCurrency } from '../lib/formatters';
+import { formatCurrency, formatDate, getStatusColor } from '../lib/formatters';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
 export default function Reports() {
   const [summary, setSummary] = useState(null);
   const [trends, setTrends] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [groupBy, setGroupBy] = useState('month');
+
+  // Helper to compute date range based on groupBy
+  const getDateRangeForGroup = (group) => {
+    const today = new Date();
+    let start = '';
+    let end = '';
+
+    if (group === 'day') {
+      const dateStr = today.toISOString().split('T')[0];
+      start = dateStr;
+      end = dateStr;
+    } else if (group === 'week') {
+      const dayOfWeek = today.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + mondayOffset);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      start = monday.toISOString().split('T')[0];
+      end = sunday.toISOString().split('T')[0];
+    } else if (group === 'month') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      start = firstDay.toISOString().split('T')[0];
+      end = lastDay.toISOString().split('T')[0];
+    } else if (group === 'year') {
+      const firstDay = new Date(today.getFullYear(), 0, 1);
+      const lastDay = new Date(today.getFullYear(), 11, 31);
+      start = firstDay.toISOString().split('T')[0];
+      end = lastDay.toISOString().split('T')[0];
+    }
+
+    return { start, end };
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -31,13 +69,23 @@ export default function Reports() {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
 
-      const [summaryRes, trendsRes] = await Promise.all([
+      // For invoice list, use period-based date range if no manual dates are set
+      const invoiceParams = { ...params };
+      if (!startDate && !endDate) {
+        const range = getDateRangeForGroup(groupBy);
+        invoiceParams.startDate = range.start;
+        invoiceParams.endDate = range.end;
+      }
+
+      const [summaryRes, trendsRes, exportRes] = await Promise.all([
         api.get('/reports/summary', { params }),
         api.get('/reports/trends', { params: { ...params, groupBy } }),
+        api.get('/reports/export', { params: invoiceParams }),
       ]);
 
       setSummary(summaryRes.data.data);
       setTrends(trendsRes.data.data);
+      setInvoices(exportRes.data.data || []);
     } catch {
       // handled
     } finally {
@@ -56,8 +104,14 @@ export default function Reports() {
   const handleExport = async () => {
     try {
       const params = {};
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
+      if (startDate) {
+        params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+      } else {
+        const range = getDateRangeForGroup(groupBy);
+        params.startDate = range.start;
+        params.endDate = range.end;
+      }
 
       const [exportRes, settingsRes] = await Promise.all([
         api.get('/reports/export', { params }),
@@ -141,7 +195,7 @@ export default function Reports() {
       let totalDue = 0;
 
       rows.forEach((row, i) => {
-        const payReceived = row['Status'] === 'DueToNext' ? 0 : (row['PAY Received'] || 0);
+        const payReceived = row['Status'] === 'DueToNext' || row['Status'] === 'Carry-Forward' ? 0 : (row['PAY Received'] || 0);
         totalSales += row['Grand Total'] || 0;
         totalPaid += payReceived;
         totalDue += row['Previous Due'] || 0;
@@ -217,7 +271,7 @@ export default function Reports() {
       // Generate and download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      saveAs(blob, `Invoice-Report-${new Date().toISOString().split('T')[0]}.xlsx`);
+      saveAs(blob, `Invoice-Report-${groupBy}-${new Date().toISOString().split('T')[0]}.xlsx`);
       toast.success('Excel report downloaded!');
     } catch (err) {
       console.error('Export error:', err);
@@ -243,27 +297,31 @@ export default function Reports() {
 
       {/* Filter Bar */}
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
-        <div className="flex flex-wrap items-end gap-4">
-          <Input
-            label="Start Date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <Input
-            label="End Date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-          <div className="space-y-1">
+        <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+          <div className="w-full sm:w-auto">
+            <Input
+              label="Start Date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <Input
+              label="End Date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1 w-full sm:w-auto">
             <label className="block text-sm font-medium text-gray-700">Period</label>
             <div className="flex bg-gray-100 rounded-lg p-0.5">
               {['day', 'week', 'month', 'year'].map((g) => (
                 <button
                   key={g}
                   onClick={() => setGroupBy(g)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all capitalize
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all capitalize
                     ${groupBy === g
                       ? 'bg-white text-blue-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
@@ -531,6 +589,86 @@ export default function Reports() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Invoice List for Selected Period */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+              {groupBy === 'day' ? "Today's" : groupBy === 'week' ? "This Week's" : groupBy === 'month' ? "This Month's" : "This Year's"} Invoices
+            </h3>
+            <p className="text-sm text-gray-500">{invoices.length} invoices found</p>
+          </div>
+        </div>
+
+        {invoices.length > 0 ? (
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-sm min-w-[540px]">
+              <thead>
+                <tr className="text-left text-xs text-gray-400 uppercase border-b border-gray-100">
+                  <th className="pb-3 pl-4 sm:pl-0 pr-3 font-medium">#</th>
+                  <th className="pb-3 pr-3 font-medium">Invoice</th>
+                  <th className="pb-3 pr-3 font-medium hidden md:table-cell">Date</th>
+                  <th className="pb-3 pr-3 font-medium">Customer</th>
+                  <th className="pb-3 pr-3 font-medium text-right">Total</th>
+                  <th className="pb-3 pr-3 font-medium text-right hidden sm:table-cell">Paid</th>
+                  <th className="pb-3 pr-3 font-medium text-center">Status</th>
+                  <th className="pb-3 pr-4 sm:pr-0 font-medium text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((inv, i) => (
+                  <tr key={inv['Invoice No'] || i} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="py-3 pl-4 sm:pl-0 pr-3 text-gray-500">{inv['Sl No'] || i + 1}</td>
+                    <td className="py-3 pr-3 font-medium text-gray-900">{inv['Invoice No']}</td>
+                    <td className="py-3 pr-3 text-gray-600 hidden md:table-cell">{inv['Date']}</td>
+                    <td className="py-3 pr-3 text-gray-700 max-w-[120px] truncate">{inv['Customer']}</td>
+                    <td className="py-3 pr-3 text-right font-medium text-gray-900">{formatCurrency(inv['Grand Total'])}</td>
+                    <td className="py-3 pr-3 text-right text-emerald-600 hidden sm:table-cell">
+                      {formatCurrency(inv['Status'] === 'DueToNext' || inv['Status'] === 'Carry-Forward' ? 0 : (inv['PAY Received'] || 0))}
+                    </td>
+                    <td className="py-3 pr-3 text-center">
+                      <Badge className={getStatusColor(inv['Status'])}>{inv['Status']}</Badge>
+                    </td>
+                    <td className="py-3 pr-4 sm:pr-0 text-center">
+                      {inv['_id'] ? (
+                        <Link
+                          to={`/invoices/${inv['_id']}`}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">View</span>
+                        </Link>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 font-semibold">
+                  <td colSpan="2" className="py-3 pl-4 sm:pl-0 text-right text-gray-900 hidden md:table-cell"></td>
+                  <td className="py-3 text-right text-gray-900 md:hidden" colSpan="2"></td>
+                  <td className="py-3 text-right text-gray-900 hidden md:table-cell">Total</td>
+                  <td className="py-3 text-right text-gray-900 md:hidden">Total</td>
+                  <td className="py-3 pr-3 text-right text-gray-900">
+                    {formatCurrency(invoices.reduce((s, inv) => s + (inv['Grand Total'] || 0), 0))}
+                  </td>
+                  <td className="py-3 pr-3 text-right text-emerald-600 hidden sm:table-cell">
+                    {formatCurrency(invoices.reduce((s, inv) => s + (inv['Status'] === 'DueToNext' || inv['Status'] === 'Carry-Forward' ? 0 : (inv['PAY Received'] || 0)), 0))}
+                  </td>
+                  <td colSpan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-32 text-sm text-gray-400">
+            No invoices for this period
+          </div>
+        )}
       </div>
     </div>
   );
