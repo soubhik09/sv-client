@@ -58,46 +58,11 @@ export default function InvoiceDetail() {
   const captureInvoice = async () => {
     const el = invoiceRef.current;
     if (!el) return null;
-
-    // Clone the element, inline all styles, render off-screen
-    const clone = el.cloneNode(true);
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.width = '800px';
-    clone.style.minWidth = '800px';
-    clone.style.overflow = 'visible';
-    clone.style.background = '#fff';
-    document.body.appendChild(clone);
-
-    // Inline computed styles from source onto clone
-    const srcAll = el.querySelectorAll('*');
-    const cloneAll = clone.querySelectorAll('*');
-    srcAll.forEach((srcNode, i) => {
-      if (!cloneAll[i]) return;
-      const cs = window.getComputedStyle(srcNode);
-      cloneAll[i].style.cssText = cs.cssText;
-    });
-    // Also inline root element styles
-    const rootCs = window.getComputedStyle(el);
-    clone.style.cssText = rootCs.cssText;
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.width = '800px';
-    clone.style.minWidth = '800px';
-    clone.style.background = '#fff';
-
-    await new Promise((r) => setTimeout(r, 50));
-
-    const canvas = await html2canvas(clone, {
+    return html2canvas(el, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false,
     });
-
-    document.body.removeChild(clone);
-    return canvas;
   };
 
   const handleDownloadJPG = async () => {
