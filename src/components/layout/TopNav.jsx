@@ -23,8 +23,8 @@ import { formatCurrency } from '../../lib/formatters';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/invoices', label: 'Invoices', icon: FileText },
   { to: '/customers', label: 'Customers', icon: Users },
+  { to: '/invoices', label: 'Invoices', icon: FileText },
   { to: '/print', label: 'Print', icon: Printer },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: Settings },

@@ -113,8 +113,8 @@ export default function Invoices() {
       ) : (
         <>
           <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50">
                     <th className="text-left px-4 py-3 font-medium text-gray-500">Invoice</th>
@@ -141,7 +141,7 @@ export default function Invoices() {
                       <td className="px-4 py-3 text-right text-gray-600 hidden sm:table-cell">
                         {inv.status === 'Carry-Forward' || inv.status === 'DueToNext' ? formatCurrency(0) : formatCurrency(inv.pay)}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
                         {(inv.status === 'Carry-Forward' || inv.status === 'DueToNext') && inv.carriedForwardTo ? (
                           <Link to={`/invoices/${inv.carriedForwardTo._id || inv.carriedForwardTo}`}>
                             <Badge className={`${getStatusColor(inv.status)} cursor-pointer hover:opacity-80`}>

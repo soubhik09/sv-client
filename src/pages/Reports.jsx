@@ -26,7 +26,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [groupBy, setGroupBy] = useState('month');
+  const [groupBy, setGroupBy] = useState('day');
 
   // Helper to compute date range based on groupBy
   const getDateRangeForGroup = (group) => {
@@ -84,7 +84,7 @@ export default function Reports() {
       ]);
 
       setSummary(summaryRes.data.data);
-      setTrends(trendsRes.data.data);
+      setTrends(trendsRes.data.data || []);
       setInvoices(exportRes.data.data || []);
     } catch {
       // handled
@@ -409,20 +409,17 @@ export default function Reports() {
               options={{
                 chart: {
                   type: 'area',
-                  toolbar: {
-                    show: true,
-                    tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true },
-                  },
-                  zoom: { enabled: true },
+                  toolbar: { show: false },
+                  zoom: { enabled: false },
                   fontFamily: 'Inter, sans-serif',
                 },
                 dataLabels: { enabled: false },
-                stroke: { curve: 'smooth', width: [2.5, 2.5], dashArray: [0, 5] },
+                stroke: { curve: 'straight', width: [2.5, 2.5], dashArray: [0, 5] },
                 fill: {
                   type: 'gradient',
-                  gradient: { shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0, stops: [0, 100] },
+                  gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1, stops: [0, 100] },
                 },
-                colors: ['#3b82f6', '#10b981'],
+                colors: ['#2dd4bf', '#3b82f6'],
                 xaxis: {
                   categories: trends.map((t) => groupBy === 'year' ? t.date : t.date.slice(5)),
                   labels: { style: { colors: '#94a3b8', fontSize: '11px' } },
@@ -435,13 +432,20 @@ export default function Reports() {
                     formatter: (val) => '₹' + val.toLocaleString('en-IN'),
                   },
                 },
-                grid: { borderColor: '#f1f5f9', strokeDashArray: 3 },
+                grid: { borderColor: '#e2e8f0', strokeDashArray: 0 },
                 tooltip: {
                   theme: 'light',
                   y: { formatter: (val) => '₹' + val.toLocaleString('en-IN') },
                 },
                 legend: { show: false },
-                markers: { size: 4, hover: { size: 7 } },
+                markers: { size: 0 },
+                responsive: [{
+                  breakpoint: 640,
+                  options: {
+                    xaxis: { labels: { rotate: -45, style: { fontSize: '9px' } } },
+                    yaxis: { labels: { style: { fontSize: '9px' } } },
+                  },
+                }],
               }}
               series={[
                 { name: 'Sales', data: trends.map((t) => t.sales) },
@@ -530,8 +534,8 @@ export default function Reports() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Breakdown</h3>
 
           {trends.length > 0 ? (
-            <div className="overflow-x-auto max-h-80 overflow-y-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead className="sticky top-0 bg-white">
                   <tr className="text-left text-xs text-gray-400 uppercase border-b border-gray-100">
                     <th className="pb-3 font-medium">Period</th>

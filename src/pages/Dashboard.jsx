@@ -6,7 +6,6 @@ import {
   FileText,
   Users,
   ArrowUpRight,
-  ArrowDownRight,
   Plus,
   ChevronLeft,
   ChevronRight,
@@ -15,7 +14,6 @@ import Chart from 'react-apexcharts';
 import api from '../lib/api';
 import { formatCurrency, formatDate } from '../lib/formatters';
 import Spinner from '../components/ui/Spinner';
-import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -23,8 +21,7 @@ export default function Dashboard() {
   const [recentCustomers, setRecentCustomers] = useState([]);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [chartPeriod, setChartPeriod] = useState('month');
-  const { user } = useAuth();
+  const [chartPeriod, setChartPeriod] = useState('day');
 
   // Calendar state
   const [calDate, setCalDate] = useState(new Date());
@@ -68,28 +65,46 @@ export default function Dashboard() {
   const prevMonth = () => setCalDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCalDate(new Date(year, month + 1, 1));
 
-  // ApexCharts config
+  // X-axis labels based on period
+  const getXCategories = () => {
+    if (chartPeriod === 'day') {
+      // date format from API: "2026-06-01" → show day number
+      return trends.map((t) => t.date.slice(8));
+    }
+    if (chartPeriod === 'month') {
+      // date format from API: "2026-01" → show month name
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return trends.map((t) => months[parseInt(t.date.slice(5)) - 1]);
+    }
+    // year: "2024", "2025", etc.
+    return trends.map((t) => t.date);
+  };
+
+  // ApexCharts config - Bar Chart
   const chartOptions = {
     chart: {
-      type: 'area',
+      type: 'bar',
       toolbar: { show: false },
-      zoom: { enabled: false },
       fontFamily: 'Inter, sans-serif',
     },
-    dataLabels: { enabled: false },
-    stroke: { curve: 'smooth', width: [2.5, 2.5], dashArray: [0, 5] },
-    fill: {
-      type: 'gradient',
-      gradient: { shadeIntensity: 1, opacityFrom: 0.15, opacityTo: 0, stops: [0, 100] },
-    },
     colors: ['#3b82f6', '#10b981'],
+    plotOptions: {
+      bar: { borderRadius: 0, columnWidth: '50%', distributed: true },
+    },
+    dataLabels: { enabled: false },
+    legend: { show: false },
     xaxis: {
-      categories: trends.map((t) => chartPeriod === 'year' ? t.date : t.date.slice(5)),
+      categories: getXCategories(),
       labels: { style: { colors: '#94a3b8', fontSize: '11px' } },
       axisBorder: { show: false },
       axisTicks: { show: false },
+      title: {
+        text: chartPeriod === 'day' ? `Days of ${new Date().toLocaleString('default', { month: 'long' })}` : chartPeriod === 'month' ? 'Months' : 'Years',
+        style: { color: '#64748b', fontSize: '12px' },
+      },
     },
     yaxis: {
+      title: { text: 'Total Sales (₹)', style: { color: '#64748b', fontSize: '12px' } },
       labels: {
         style: { colors: '#94a3b8', fontSize: '11px' },
         formatter: (val) => '₹' + val.toLocaleString('en-IN'),
@@ -100,13 +115,10 @@ export default function Dashboard() {
       theme: 'light',
       y: { formatter: (val) => '₹' + val.toLocaleString('en-IN') },
     },
-    legend: { show: false },
-    markers: { size: 4, hover: { size: 6 } },
   };
 
   const chartSeries = [
-    { name: 'Sales', data: trends.map((t) => t.sales) },
-    { name: 'Collection', data: trends.map((t) => t.collection) },
+    { name: 'Total Sales', data: trends.map((t) => t.sales) },
   ];
 
   const statCards = [
@@ -186,12 +198,12 @@ export default function Dashboard() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Performance</h3>
               <p className="text-sm text-gray-500">
-                {chartPeriod === 'day' ? 'Daily' : chartPeriod === 'week' ? 'Weekly' : chartPeriod === 'month' ? 'Monthly' : 'Yearly'} revenue trends
+                {chartPeriod === 'day' ? 'Daily' : chartPeriod === 'month' ? 'Monthly' : 'Yearly'} sales overview
               </p>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex bg-gray-100 rounded-lg p-0.5">
-                {['day', 'week', 'month', 'year'].map((p) => (
+                {['day', 'month', 'year'].map((p) => (
                   <button
                     key={p}
                     onClick={() => setChartPeriod(p)}
@@ -201,7 +213,7 @@ export default function Dashboard() {
                         : 'text-gray-500 hover:text-gray-700'
                       }`}
                   >
-                    {p === 'day' ? 'D' : p === 'week' ? 'W' : p === 'month' ? 'M' : 'Y'}
+                    {p === 'day' ? 'Day' : p === 'month' ? 'Month' : 'Year'}
                   </button>
                 ))}
               </div>
@@ -209,14 +221,16 @@ export default function Dashboard() {
           </div>
 
           {/* ApexCharts Area Chart */}
-          <div className="relative h-56">
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="min-w-[600px] h-96">
             {trends.length >= 1 ? (
-              <Chart options={chartOptions} series={chartSeries} type="area" height="100%" />
+              <Chart options={chartOptions} series={chartSeries} type="bar" height="100%" />
             ) : (
               <div className="flex items-center justify-center h-full text-sm text-gray-400">
                 No trend data available yet
               </div>
             )}
+            </div>
           </div>
 
           {/* Summary below chart */}

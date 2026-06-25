@@ -58,11 +58,24 @@ export default function InvoiceDetail() {
   const captureInvoice = async () => {
     const el = invoiceRef.current;
     if (!el) return null;
-    return html2canvas(el, {
+
+    // Force desktop width for consistent capture on mobile
+    const originalStyle = el.style.cssText;
+    el.style.width = '800px';
+    el.style.minWidth = '800px';
+    el.style.overflow = 'visible';
+    el.offsetHeight; // trigger reflow
+
+    const canvas = await html2canvas(el, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
+      width: 800,
+      windowWidth: 800,
     });
+
+    el.style.cssText = originalStyle;
+    return canvas;
   };
 
   const handleDownloadJPG = async () => {
