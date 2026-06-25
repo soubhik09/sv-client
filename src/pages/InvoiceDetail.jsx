@@ -55,23 +55,39 @@ export default function InvoiceDetail() {
     }
   };
 
+  const captureInvoice = async () => {
+    const el = invoiceRef.current;
+    if (!el) return null;
+
+    // Inline all computed styles before capture
+    const srcNodes = [el, ...el.querySelectorAll('*')];
+    const originalStyles = srcNodes.map((node) => node.getAttribute('style') || '');
+    srcNodes.forEach((node) => {
+      const s = window.getComputedStyle(node);
+      node.style.cssText = s.cssText;
+    });
+
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+
+    // Restore original styles
+    srcNodes.forEach((node, i) => {
+      if (originalStyles[i]) node.setAttribute('style', originalStyles[i]);
+      else node.removeAttribute('style');
+    });
+
+    return canvas;
+  };
+
   const handleDownloadJPG = async () => {
     if (!invoiceRef.current) return;
     setDownloading(true);
     try {
-      const el = invoiceRef.current;
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-        onclone: (clonedDoc) => {
-          const clonedEl = clonedDoc.querySelector('[data-invoice]');
-          if (clonedEl) clonedEl.style.overflow = 'visible';
-        },
-      });
+      const canvas = await captureInvoice();
       const link = document.createElement('a');
       const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
       link.download = `${fileName}.jpg`;
@@ -91,15 +107,7 @@ export default function InvoiceDetail() {
   const handleShare = async () => {
     if (!invoiceRef.current) return;
     try {
-      const el = invoiceRef.current;
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-      });
+      const canvas = await captureInvoice();
       const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
       const file = new File([blob], `${fileName}.jpg`, { type: 'image/jpeg' });
