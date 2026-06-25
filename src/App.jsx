@@ -10,6 +10,7 @@ import Invoices from './pages/Invoices';
 import InvoiceForm from './pages/InvoiceForm';
 import InvoiceDetail from './pages/InvoiceDetail';
 import Reports from './pages/Reports';
+import Print from './pages/Print';
 import Settings from './pages/Settings';
 import Staff from './pages/Staff';
 import ChangePassword from './pages/ChangePassword';
@@ -59,6 +60,7 @@ function AppRoutes() {
         <Route path="invoices/new" element={<InvoiceForm />} />
         <Route path="invoices/:id" element={<InvoiceDetail />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="print" element={<Print />} />
         <Route path="settings" element={<Settings />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route

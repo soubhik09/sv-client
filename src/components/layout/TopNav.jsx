@@ -15,6 +15,7 @@ import {
   UserCog,
   AlertCircle,
   IndianRupee,
+  Printer,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/invoices', label: 'Invoices', icon: FileText },
   { to: '/customers', label: 'Customers', icon: Users },
+  { to: '/print', label: 'Print', icon: Printer },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -32,9 +34,18 @@ export default function TopNav() {
   const { user, logout } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileClosing, setMobileClosing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
+
+  const closeMobile = () => {
+    setMobileClosing(true);
+    setTimeout(() => {
+      setMobileOpen(false);
+      setMobileClosing(false);
+    }, 250);
+  };
 
   const fetchNotifications = async () => {
     setNotifLoading(true);
@@ -75,8 +86,16 @@ export default function TopNav() {
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm no-print">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-8">
+          {/* Left: Hamburger + Logo */}
+          <div className="flex items-center gap-3">
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => mobileOpen ? closeMobile() : setMobileOpen(true)}
+              className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+
             <Link to="/" className="flex items-center gap-2">
               <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-sm font-bold text-white">SV</span>
@@ -85,7 +104,7 @@ export default function TopNav() {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1 ml-5">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -136,7 +155,7 @@ export default function TopNav() {
               {showNotifications && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-xl border border-gray-100 shadow-lg z-50 overflow-hidden">
+                  <div className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 bg-white rounded-xl border border-gray-100 shadow-lg z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                       <span className="text-xs text-gray-500">{notifications.length} pending</span>
@@ -230,57 +249,65 @@ export default function TopNav() {
                 </>
               )}
             </div>
-
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </div>
-
-        {/* Mobile Nav */}
-        {mobileOpen && (
-          <nav className="lg:hidden pb-4 pt-2 border-t border-gray-100 mt-2 flex flex-wrap gap-2">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
-                  ${isActive
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </NavLink>
-            ))}
-            {user?.role === 'Admin' && (
-              <NavLink
-                to="/staff"
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
-                  ${isActive
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <UserCog className="w-4 h-4" />
-                Staff
-              </NavLink>
-            )}
-          </nav>
-        )}
       </div>
+
+      {/* Mobile Side Panel */}
+      {mobileOpen && (
+        <>
+          <div className={`fixed inset-0 bg-black/30 z-40 lg:hidden ${mobileClosing ? 'animate-[fadeOut_0.25s_ease]' : 'animate-[fadeIn_0.2s_ease]'}`} onClick={closeMobile} />
+          <nav className={`fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-xl lg:hidden flex flex-col py-6 px-4 ${mobileClosing ? 'animate-[slideOut_0.25s_ease]' : 'animate-[slideIn_0.25s_ease]'}`}>
+            <div className="flex items-center justify-between mb-6">
+              <Link to="/" onClick={closeMobile} className="flex items-center gap-2">
+                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">SV</span>
+                </div>
+                <span className="text-lg font-bold text-gray-900">Siddhi Vinayak</span>
+              </Link>
+              <button onClick={closeMobile} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  onClick={closeMobile}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
+                    ${isActive
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                    }`
+                  }
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </NavLink>
+              ))}
+              {user?.role === 'Admin' && (
+                <NavLink
+                  to="/staff"
+                  onClick={closeMobile}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
+                    ${isActive
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                    }`
+                  }
+                >
+                  <UserCog className="w-5 h-5" />
+                  Staff
+                </NavLink>
+              )}
+            </div>
+          </nav>
+        </>
+      )}
     </header>
   );
 }

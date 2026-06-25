@@ -24,7 +24,7 @@ export default function Button({
 }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 font-medium rounded-lg 
+      className={`inline-flex items-center justify-center gap-2 font-medium rounded-lg cursor-pointer
         transition-all focus:outline-none focus:ring-2 focus:ring-offset-1
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[variant]} ${sizes[size]} ${className}`}

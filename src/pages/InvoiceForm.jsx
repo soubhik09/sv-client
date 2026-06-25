@@ -214,11 +214,12 @@ export default function InvoiceForm() {
       if (isEdit) {
         await api.put(`/invoices/${id}`, payload);
         toast.success('Invoice updated');
+        navigate(`/invoices/${id}`);
       } else {
-        await api.post('/invoices', payload);
+        const { data } = await api.post('/invoices', payload);
         toast.success('Invoice created');
+        navigate(`/invoices/${data.data._id}`);
       }
-      navigate('/invoices');
     } catch {
       // handled
     } finally {

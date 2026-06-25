@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Trash2, Printer, Download, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Trash2, Download, IndianRupee, Share2 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -59,11 +59,18 @@ export default function InvoiceDetail() {
     if (!invoiceRef.current) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(invoiceRef.current, {
+      const el = invoiceRef.current;
+      const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
+        onclone: (clonedDoc) => {
+          const clonedEl = clonedDoc.querySelector('[data-invoice]');
+          if (clonedEl) clonedEl.style.overflow = 'visible';
+        },
       });
       const link = document.createElement('a');
       const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
@@ -78,6 +85,40 @@ export default function InvoiceDetail() {
       toast.error('Failed to download');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!invoiceRef.current) return;
+    try {
+      const el = invoiceRef.current;
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
+      });
+      const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+      const file = new File([blob], `${fileName}.jpg`, { type: 'image/jpeg' });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNo}` });
+      } else {
+        // Fallback: download the image directly
+        const link = document.createElement('a');
+        link.download = `${fileName}.jpg`;
+        link.href = URL.createObjectURL(blob);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        toast.success('Invoice downloaded!');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') toast.error('Failed to share');
     }
   };
 
@@ -135,7 +176,7 @@ export default function InvoiceDetail() {
       {/* Invoice Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Printable content */}
-        <div ref={invoiceRef} className="bg-white">
+        <div ref={invoiceRef} data-invoice className="bg-white">
         {/* Blue top accent bar */}
         <div className="h-2 bg-blue-600"></div>
 
@@ -222,14 +263,14 @@ export default function InvoiceDetail() {
         </div>
 
         {/* Items Table */}
-        <div className="px-4 sm:px-8 overflow-x-auto">
-          <table className="w-full text-xs sm:text-sm min-w-[500px]">
+        <div className="px-4 sm:px-8">
+          <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="bg-blue-600 text-white">
                 <th className="text-left px-2 sm:px-4 py-2 sm:py-3 font-medium rounded-tl-lg">ITEM</th>
-                <th className="text-right px-2 sm:px-4 py-2 sm:py-3 font-medium">RATE</th>
-                <th className="text-center px-2 sm:px-4 py-2 sm:py-3 font-medium">WEIGHT</th>
-                <th className="text-center px-2 sm:px-4 py-2 sm:py-3 font-medium">QTY</th>
+                <th className="text-right px-1 sm:px-4 py-2 sm:py-3 font-medium">RATE</th>
+                <th className="text-center px-1 sm:px-4 py-2 sm:py-3 font-medium">WT</th>
+                <th className="text-center px-1 sm:px-4 py-2 sm:py-3 font-medium">QTY</th>
                 <th className="text-right px-2 sm:px-4 py-2 sm:py-3 font-medium rounded-tr-lg">TOTAL</th>
               </tr>
             </thead>
@@ -240,9 +281,9 @@ export default function InvoiceDetail() {
                     <p className="font-medium text-gray-900">{item.description}</p>
                     <p className="text-xs text-gray-400 mt-0.5">Unit: {item.qom}</p>
                   </td>
-                  <td className="px-2 sm:px-4 py-3 text-right text-gray-700">{formatCurrency(item.rate)}</td>
-                  <td className="px-2 sm:px-4 py-3 text-center text-gray-700">{item.weight}</td>
-                  <td className="px-2 sm:px-4 py-3 text-center text-gray-700">{item.qty}</td>
+                  <td className="px-1 sm:px-4 py-3 text-right text-gray-700">{formatCurrency(item.rate)}</td>
+                  <td className="px-1 sm:px-4 py-3 text-center text-gray-700">{item.weight}</td>
+                  <td className="px-1 sm:px-4 py-3 text-center text-gray-700">{item.qty}</td>
                   <td className="px-2 sm:px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(item.amount)}</td>
                 </tr>
               ))}
@@ -305,13 +346,13 @@ export default function InvoiceDetail() {
               Re Pay
             </Button>
           )}
-          <Button variant="secondary" size="sm" onClick={() => window.print()}>
-            <Printer className="w-4 h-4" />
-            Print
-          </Button>
           <Button variant="secondary" size="sm" onClick={handleDownloadJPG} loading={downloading}>
             <Download className="w-4 h-4" />
             Download
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleShare}>
+            <Share2 className="w-4 h-4" />
+            Share
           </Button>
           {user?.role === 'Admin' && (
             <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>
