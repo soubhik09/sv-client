@@ -59,13 +59,14 @@ export default function InvoiceDetail() {
     const el = invoiceRef.current;
     if (!el) return null;
 
-    // Inline all computed styles before capture
-    const srcNodes = [el, ...el.querySelectorAll('*')];
-    const originalStyles = srcNodes.map((node) => node.getAttribute('style') || '');
-    srcNodes.forEach((node) => {
-      const s = window.getComputedStyle(node);
-      node.style.cssText = s.cssText;
-    });
+    // Force desktop width for consistent capture on all devices
+    const originalWidth = el.style.width;
+    const originalMinWidth = el.style.minWidth;
+    el.style.width = '800px';
+    el.style.minWidth = '800px';
+
+    // Wait for reflow
+    await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(el, {
       scale: 2,
@@ -74,11 +75,9 @@ export default function InvoiceDetail() {
       logging: false,
     });
 
-    // Restore original styles
-    srcNodes.forEach((node, i) => {
-      if (originalStyles[i]) node.setAttribute('style', originalStyles[i]);
-      else node.removeAttribute('style');
-    });
+    // Restore
+    el.style.width = originalWidth;
+    el.style.minWidth = originalMinWidth;
 
     return canvas;
   };
