@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Trash2, Download, IndianRupee, Share2 } from 'lucide-react';
-import html2canvas from 'html2canvas-pro';
+import { toJpeg } from 'html-to-image';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, formatDateTime, getStatusColor } from '../lib/formatters';
@@ -55,44 +55,38 @@ export default function InvoiceDetail() {
     }
   };
 
-  const captureInvoice = async () => {
-    const el = invoiceRef.current;
-    if (!el) return null;
+const captureInvoice = async () => {
+  const el = invoiceRef.current;
+  if (!el) return null;
 
-    // Force desktop width for consistent capture on mobile
-    const originalStyle = el.style.cssText;
-    el.style.width = '800px';
-    el.style.minWidth = '800px';
-    el.style.overflow = 'visible';
-    el.offsetHeight; // trigger reflow
+  const dataUrl = await toJpeg(el, {
+    quality: 0.95,
+    backgroundColor: '#ffffff',
+    style: {
+      width: '800px',
+      minWidth: '800px',
+      overflow: 'visible',
+    },
+    pixelRatio: 2,
+  });
 
-    const canvas = await html2canvas(el, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      width: 800,
-      windowWidth: 800,
-    });
-
-    el.style.cssText = originalStyle;
-    return canvas;
-  };
+  return dataUrl;
+};
 
   const handleDownloadJPG = async () => {
-    if (!invoiceRef.current) return;
     setDownloading(true);
     try {
-      const canvas = await captureInvoice();
+      const dataUrl = await captureInvoice();
       const link = document.createElement('a');
       const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
       link.download = `${fileName}.jpg`;
-      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.href = dataUrl;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       toast.success('Invoice downloaded!');
     } catch (err) {
-      console.error('Download error:', err);
+      console.error(err);
       toast.error('Failed to download');
     } finally {
       setDownloading(false);
@@ -100,30 +94,28 @@ export default function InvoiceDetail() {
   };
 
   const handleShare = async () => {
-    if (!invoiceRef.current) return;
-    try {
-      const canvas = await captureInvoice();
-      const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-      const file = new File([blob], `${fileName}.jpg`, { type: 'image/jpeg' });
+  try {
+    const dataUrl = await captureInvoice();
+    const fileName = `${invoice.invoiceNo}_${invoice.customerName.replace(/\s+/g, '_')}`;
 
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNo}` });
-      } else {
-        // Fallback: download the image directly
-        const link = document.createElement('a');
-        link.download = `${fileName}.jpg`;
-        link.href = URL.createObjectURL(blob);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-        toast.success('Invoice downloaded!');
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') toast.error('Failed to share');
+    const blob = await fetch(dataUrl).then(r => r.blob());
+    const file = new File([blob], `${fileName}.jpg`, { type: 'image/jpeg' });
+
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNo}` });
+    } else {
+      const link = document.createElement('a');
+      link.download = `${fileName}.jpg`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Downloaded!');
     }
-  };
+  } catch (err) {
+    if (err.name !== 'AbortError') toast.error('Failed to share');
+  }
+};
 
   const handlePayment = async (e) => {
     e.preventDefault();
